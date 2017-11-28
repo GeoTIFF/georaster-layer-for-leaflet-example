@@ -1,0 +1,28 @@
+{
+  "name": "georaster-layer-for-leaflet-example",
+  "version": "1.0.0",
+  "description": "Simple Example of GeoRasterLayer for Leaflet",
+  "scripts": {
+    "build": "browserify main.js -o bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com//GeoTIFF/georaster-layer-for-leaflet-example"
+  },
+  "keywords": [
+    "georaster",
+    "leaflet",
+    "geotiff",
+    "gridlayer"
+  ],
+  "author": "Daniel J. Dufour",
+  "license": "Apache-2.0",
+  "private": true,
+  "dependencies": {
+    "georaster": "0.0.7",
+    "georaster-layer-for-leaflet": "0.0.4"
+  },
+  "devDependencies": {
+    "browserify": "^14.5.0"
+  }
+}
