@@ -1,6 +1,6 @@
 {
   "name": "georaster-layer-for-leaflet-example",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple Example of GeoRasterLayer for Leaflet",
   "scripts": {
     "build": "browserify main.js -o bundle.js"
@@ -20,7 +20,7 @@
   "private": true,
   "dependencies": {
     "georaster": "0.0.7",
-    "georaster-layer-for-leaflet": "0.0.4"
+    "georaster-layer-for-leaflet": "0.1.1"
   },
   "devDependencies": {
     "browserify": "^14.5.0"
