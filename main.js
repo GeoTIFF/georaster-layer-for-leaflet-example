@@ -28,7 +28,9 @@ fetch(url_to_geotiff_file)
       */
       var layer = new GeoRasterLayer({
           georaster: georaster,
-          opacity: 0.7
+          opacity: 0.7,
+          pixelValuesToColorFn: values => values[0] > 100 ? '#ff0000' : '#0000ff',
+          resolution: 64 // optional parameter for adjusting display resolution
       });
       layer.addTo(map);
 
