@@ -44,10 +44,11 @@
         var file = event.target.files[0];
         console.log("file:", file);
 
-        var url = URL.createObjectURL(file);
-        console.log("url:", url);
-
-        parseGeoraster(url).then(georaster => {
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onloadend = function() {
+          var arrayBuffer = reader.result;
+          parseGeoraster(arrayBuffer).then(georaster => {
 
             console.log("georaster:", georaster);
             /*
@@ -68,7 +69,8 @@
 
             map.fitBounds(layer.getBounds());
             document.getElementById("overlay").style.display = "none";
-        });
+          });
+        };
       });
     </script>
   </body>
