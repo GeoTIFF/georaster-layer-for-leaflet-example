@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+    <style>
+      #map {
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+      #map {
+        z-index: 8;
+      }
+      #sliders-panel {
+        background: white;
+        bottom: 0;
+        height: 75px;
+        left: 0;
+        padding: 20px;
+        position: absolute;
+        right: 0;
+        z-index: 99;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="sliders-panel">
+      <input id="threshold" class="slider" type="range" multiple value="0,100" />
+    </div>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/proj4"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet/georaster-layer-for-leaflet.browserify.min.js"></script>
+
+
+    <!-- Slider Code -->
+    <link rel="stylesheet" href="https://leaverou.github.io/multirange/multirange.css">
+    <script src="https://leaverou.github.io/multirange/multirange.js"></script>
+
+    <script>
+      // initalize leaflet map
+      var map = L.map('map').setView([0, 0], 5);
+
+      // add OpenStreetMap basemap
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var url_to_geotiff_file = "https://s3.amazonaws.com/geotiff.io/PuertoRicoTropicalFruit.tiff";
+
+      fetch(url_to_geotiff_file)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          parseGeoraster(arrayBuffer).then(georaster => {
+            console.log("georaster:", georaster);
+            const min = georaster.mins[0];
+            const max = georaster.maxs[0];
+            const range = georaster.ranges[0];
+            /*
+                GeoRasterLayer is an extension of GridLayer,
+                which means can use GridLayer options like opacity.
+
+                Just make sure to include the georaster option!
+
+                http://leafletjs.com/reference-1.2.0.html#gridlayer
+            */
+            var layer = new GeoRasterLayer({
+                georaster: georaster,
+                opacity: 0.7,
+                pixelValuesToColorFn: function(pixelValues) {
+                  var pixelValue = pixelValues[0]; // there's just one band in this raster
+                  const threshold = document.getElementById('threshold').value.split(",").map(Number);
+                  // the slider gives values on a 1-100 range, so we have to rescale to range in values in raster
+                  const bottom = min + ((threshold[0] / 100) * range);
+                  const top = min + ((threshold[1] / 100) * range);
+                  if (pixelValue >= bottom && pixelValue <= top ) {
+                    // scale display color
+                    var red = 255 - Math.round(((pixelValue - min) / range) * 255);
+                    var green = red;
+                    var blue = 0;
+                    return `rgb(${red},${green},${blue})`;
+                  } else {
+                    return undefined;
+                  }
+                },
+                resolution: 256
+            });
+            console.log("layer:", layer);
+            layer.addTo(map);
+
+            map.fitBounds(layer.getBounds());
+
+            function redrawLayer() {
+              layer.redraw();
+            }
+
+            // make sure to redraw layer when threhsold changes
+            Array.from(document.getElementsByClassName("slider")).forEach(function(slider) {
+              slider.addEventListener("change", redrawLayer);
+              slider.addEventListener("input", redrawLayer);
+            });
+          });
+        });
+    </script>
+  </body>
+</html>
