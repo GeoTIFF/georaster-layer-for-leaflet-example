@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+    <style>
+      #map {
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/chroma-js"></script>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/proj4"></script>
+    <script src="https:///unpkg.com/georaster-layer-for-leaflet@latest"></script>
+    <script>
+
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+        
+      // initalize leaflet map
+      var map = L.map('map').setView([0, 0], 5);
+
+      // add OpenStreetMap basemap
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      /*
+        Daylight Wildfire Detection
+        Adopted from https://observablehq.com/@geosurge/identifying-carr-wildfire-with-landsat-8
+        which was based on:
+        Wilfrid Schroeder, Patricia Oliva, Louis Giglio et al. Active fire detection using Landsat-8/OLI data
+        https://doi.org/10.1016/j.rse.2015.08.032. (http://www.sciencedirect.com/science/article/pii/S0034425715301206)
+      */
+      const baseURL = "https://landsat-pds.s3.amazonaws.com/c1/L8/045/032/LC08_L1TP_045032_20180811_20180815_01_T1/LC08_L1TP_045032_20180811_20180815_01_T1_B.TIF";
+
+      const band2URL = baseURL.replace('B.TIF', 'B2.TIF');
+      const band3URL = baseURL.replace('B.TIF', 'B3.TIF');
+      const band4URL = baseURL.replace('B.TIF', 'B4.TIF');
+      const band5URL = baseURL.replace('B.TIF', 'B5.TIF');
+      const band7URL = baseURL.replace('B.TIF', 'B7.TIF');
+
+      Promise.all([
+        parseGeoraster(band2URL),
+        parseGeoraster(band3URL),
+        parseGeoraster(band4URL),
+        parseGeoraster(band5URL),
+        parseGeoraster(band7URL)
+      ]).then(georasters => {
+        var pixelValuesToColorFn = values => {
+          const [ BLUE, GREEN, RED, NIR, SWIR ] = values;
+        
+          // no data
+          if (NIR === 0 || SWIR === 0) return;
+
+          const R75 = SWIR / NIR;
+
+          if ((R75 > 0.25 && (SWIR - NIR) > 0.3 && SWIR > 0.5)) {
+            return "#F00";
+          } else if (RED !== 0 && GREEN !== 0 && BLUE !== 0) {
+            const r = Math.round(RED / 65536 * 255 * 2.55);
+            const g = Math.round(GREEN / 65536 * 255 * 2.55);
+            const b = Math.round(BLUE / 65536 * 255 * 2.55);
+            const rgba = `rgba(${r},${g},${b}, 0.75)`;
+            return rgba;
+          }
+        };
+        var layer = new GeoRasterLayer({
+          georasters,
+          pixelValuesToColorFn,
+          resolution: 64,
+          opacity: 1
+        });
+        layer.addTo(map);
+        map.fitBounds(layer.getBounds());
+      });
+    </script>
+  </body>
+</html>
