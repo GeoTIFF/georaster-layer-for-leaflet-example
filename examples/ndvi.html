@@ -10,10 +10,29 @@
         position: absolute;
         right: 0;
         top: 0;
+        z-index: 1;
+      }
+      #info {
+        background: rgba(20, 20, 20, 0.85);
+        color: lightblue;
+        left: 15%;
+        padding: 15px;
+        position: absolute;
+        top: 0;
+        right: 15%;
+        z-index: 2;
+      }
+      #info a {
+        color: lightblue;
       }
     </style>
   </head>
   <body>
+    <div id="info">
+      You are viewing a map created with <a href="http://leafletjs.com/">LeafletJS</a> and <a href="https://github.com/geotiff/georaster-layer-for-leaflet">GeoRasterLayer for Leaflet</a>.
+      <br/>
+      This demo is pulling from 2 64MB Landsat 8 GeoTIFFs, but takes less than 1 MB to load through the magic of <a href="https://www.cogeo.org/">Cloud Optimized GeoTIFFs</a>.
+    </div>
     <div id="map"></div>
     <script src="https://unpkg.com/chroma-js"></script>
     <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
