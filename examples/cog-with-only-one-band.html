@@ -21,7 +21,7 @@
     <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
     <script>
       // initalize leaflet map
-      var map = L.map("map").setView([0, 0], 0);
+      var map = L.map("map").setView([40.761888, -122.316234], 0);
 
       // add OpenStreetMap basemap
       L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
@@ -36,7 +36,6 @@
           georaster,
           resolution: 512
         });
-        map.fitBounds(layer.getBounds());
         layer.addTo(map);
       });
     </script>
