@@ -32,6 +32,7 @@
       parseGeoraster(url_to_geotiff_file).then(function (georaster) {
         console.log("georaster:", georaster);
         const layer = new GeoRasterLayer({
+          attribution: "GeoTIFF from Maxar",
           debugLevel: 0,
           georaster,
           pixelValuesToColorFn: values => {
