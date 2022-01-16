@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+    <style>
+      #map {
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/chroma-js"></script>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/proj4"></script>
+    <script src="https:///unpkg.com/georaster-layer-for-leaflet@latest"></script>
+    <script>
+      (async function() {
+        // initalize leaflet map
+        var map = L.map('map').setView([0, 0], 5);
+
+        // add OpenStreetMap basemap
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const baseURL = "https://landsat-pds.s3.amazonaws.com/c1/L8/024/030/LC08_L1TP_024030_20180723_20180731_01_T1/LC08_L1TP_024030_20180723_20180731_01_T1_B.TIF";
+
+        const red_url = baseURL.replace('B.TIF', 'B4.TIF');
+        const green_url = baseURL.replace('B.TIF', 'B3.TIF');
+        const blue_url = baseURL.replace('B.TIF', 'B2.TIF');
+
+        const red_georaster = await parseGeoraster(red_url);
+        const green_georaster = await parseGeoraster(green_url);
+        const blue_georaster = await parseGeoraster(blue_url);
+
+        const georasters = [red_georaster, green_georaster, blue_georaster];
+
+        const pixelValuesToColorFn = ([red, green, blue]) => {
+          const max = Math.pow(2, 14);
+          red = Math.round(255 * red / max);
+          green = Math.round(255 * green / max);
+          blue = Math.round(255 * blue / max);
+
+          // make sure no values exceed 255
+          red = Math.min(red, 255);
+          green = Math.min(green, 255);
+          blue = Math.min(blue, 255);
+
+          // treat all black as no data
+          if (red === 0 && green === 0 && blue === 0) return null;
+
+          return `rgb(${red}, ${green}, ${blue})`;
+        };
+
+        const layer = new GeoRasterLayer({
+          georasters,
+          pixelValuesToColorFn,
+          resolution: 128
+        });
+
+        layer.addTo(map);
+
+        map.fitBounds(layer.getBounds());
+      })();
+    </script>
+  </body>
+</html>
