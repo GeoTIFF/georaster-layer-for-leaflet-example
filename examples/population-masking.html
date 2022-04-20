@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+    <style>
+      #map {
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/chroma-js"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <script>
+      // initalize leaflet map
+      var map = L.map('map').setView([42.358056, -71.063611], 10);
+
+      // add OpenStreetMap basemap
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var url_to_geotiff_file = "https://georaster-layer-for-leaflet.s3.amazonaws.com/GHS_POP_E2015_GLOBE_R2019A_4326_9ss_V1_0.tif";
+
+      Promise.all([
+        fetch("https://geoblaze.s3.amazonaws.com/City_of_Boston_Boundary.geojson").then(res => res.json()),
+        parseGeoraster(url_to_geotiff_file)
+      ]).then(async ([boundary, georaster]) => {
+        console.log("georaster:", georaster);
+
+        const boundaryLayer = L.geoJson(boundary, { fillOpacity: 0 });
+        boundaryLayer.addTo(map);
+
+        map.fitBounds(boundaryLayer.getBounds());
+
+        /*
+            GeoRasterLayer is an extension of GridLayer,
+            which means can use GridLayer options like opacity.
+
+            Just make sure to include the georaster option!
+
+            http://leafletjs.com/reference-1.2.0.html#gridlayer
+        */
+        var scale = chroma.scale(['brown', 'orange', 'red']).domain([0,100,1000]);
+
+
+        var layer = new GeoRasterLayer({
+            attribution: "European Commission: Global Human Settlement",
+            georaster: georaster,
+            opacity: 0.75,
+            resolution: 64,
+            pixelValuesToColorFn: function (values) {
+              var population = values[0];
+              if (population === -200) return;
+              if (population < 0) return;
+              return scale(population).hex();
+            },
+            mask: boundary
+        });
+        layer.addTo(map);
+    });
+
+    </script>
+  </body>
+</html>
